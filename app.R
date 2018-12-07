@@ -11,7 +11,7 @@ dat <- data.frame(
 )
 
 tdat <- dat %>% gather(sample, value, -t)
-ggplot(tdat, aes(x=t, y=value, color=sample)) + geom_point() 
+ggplot(tdat, aes(x=t, y=value, color=sample)) + geom_point() + geom_smooth(method = "loess") + theme_classic()
 
 #
 # This is a Shiny web application. You can run the application by clicking
@@ -28,16 +28,16 @@ library(shiny)
 ui <- fluidPage(
   
   # Application title
-  titlePanel("Old Faithful Geyser Data"),
+  titlePanel("Growth curves"),
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
-      sliderInput("bins",
-                  "Number of bins:",
-                  min = 1,
-                  max = 50,
-                  value = 30)
+      sliderInput("span",
+                  "span:",
+                  min = 0.1,
+                  max = 2,
+                  value = 0.05)
     ),
     
     # Show a plot of the generated distribution
@@ -47,16 +47,15 @@ ui <- fluidPage(
   )
 )
 
+
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
   output$distPlot <- renderPlot({
-    # generate bins based on input$bins from ui.R
-    x    <- faithful[, 2] 
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    
-    # draw the histogram with the specified number of bins
-    hist(x, breaks = bins, col = 'darkgray', border = 'white')
+    ggplot(tdat, aes(x=t, y=value, color=sample)) + 
+      geom_point() + 
+      geom_smooth(method = "loess", span = input$span)+
+      theme_classic()
   })
 }
 
