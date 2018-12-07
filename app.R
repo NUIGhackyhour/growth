@@ -3,15 +3,32 @@ library(tidyr)
 
 nt <- 10
 set.seed(12345)
-dat <- data.frame(
+
+dat_lag <- data.frame(
   t=seq(1, 100, 10),
-  bug1=sort(rnorm(n=nt, 1)),
-  bug2=sort(rnorm(n=nt, 1)),
-  bug3=sort(rnorm(n=nt, 1))
+  bug1=sort(rnorm(n=nt, 0,  sd = .1)),
+  bug2=sort(rnorm(n=nt, 0,  sd = .1)),
+  bug3=sort(rnorm(n=nt, 0, sd = .1))
 )
 
+dat_exp <- data.frame(
+  t=seq(101, 200, 10),
+  bug1=sort(rnorm(n=nt, 1.5)),
+  bug2=sort(rnorm(n=nt, 1.5)),
+  bug3=sort(rnorm(n=nt, 1.5))
+)
+
+dat_stat <- data.frame(
+  t=seq(201, 300, 10),
+  bug1=sort(rnorm(n=nt, 4, sd = .1)),
+  bug2=sort(rnorm(n=nt, 4, sd = .1)),
+  bug3=sort(rnorm(n=nt, 4, sd = .1))
+)
+
+dat <- rbind(dat_lag, dat_exp, dat_stat)
 tdat <- dat %>% gather(sample, value, -t)
 ggplot(tdat, aes(x=t, y=value, color=sample)) + geom_point() + geom_smooth(method = "loess") + theme_classic()
+
 
 #
 # This is a Shiny web application. You can run the application by clicking
@@ -28,7 +45,7 @@ library(shiny)
 ui <- fluidPage(
   
   # Application title
-  titlePanel("Growth curves"),
+  titlePanel("Plate Reader data"),
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
@@ -37,8 +54,12 @@ ui <- fluidPage(
                   "span:",
                   min = 0.1,
                   max = 2,
-                  value = 0.05)
-    ),
+                  value = 0.05),
+      
+      checkboxGroupInput("sample",
+                  "sample",
+                  choices=unique(tdat$sample)
+                  )),
     
     # Show a plot of the generated distribution
     mainPanel(
@@ -52,7 +73,7 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   output$distPlot <- renderPlot({
-    ggplot(tdat, aes(x=t, y=value, color=sample)) + 
+    ggplot(tdat[tdat$sample %in% input$sample, ], aes(x=t, y=value, color=sample)) + 
       geom_point() + 
       geom_smooth(method = "loess", span = input$span)+
       theme_classic()
